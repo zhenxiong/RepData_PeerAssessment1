@@ -1,9 +1,4 @@
----
-title: "Reproducible Research: Peer Assessment 1"
-output: 
-  html_document:
-    keep_md: true
----
+# Reproducible Research: Peer Assessment 1
 *By: Lim Zhen Xiong*  
 
 ## Introduction
@@ -32,7 +27,8 @@ The dataset is stored in a comma-separated-value (CSV) file and there are a tota
 
 `dplyr` and `lattice` packages were loaded.  
 
-``` {r library, message=FALSE}
+
+```r
 library(dplyr)
 library(lattice)
 ```
@@ -42,9 +38,20 @@ The `activity.zip` file is located in the same working directory as the
 understanding of the activity data. We also converted the "date" column of the 
 dataset into "Date" class.  
 
-```{r read data}
+
+```r
 data <- read.table(unz("activity.zip","activity.csv"), header=T,quote="\"", sep=",")
 str(data)
+```
+
+```
+## 'data.frame':	17568 obs. of  3 variables:
+##  $ steps   : int  NA NA NA NA NA NA NA NA NA NA ...
+##  $ date    : Factor w/ 61 levels "2012-10-01","2012-10-02",..: 1 1 1 1 1 1 1 1 1 1 ...
+##  $ interval: int  0 5 10 15 20 25 30 35 40 45 ...
+```
+
+```r
 data$date <- as.Date(data$date)
 ```
   
@@ -55,36 +62,42 @@ Missing values in the dataset were ignored using `complete.cases()`. The total
 number of steps taken in each day was calculated using `aggregate()` and stored
 in `holder`.  
 
-``` {r computing total no of steps taken each day}
+
+```r
 data_complete <- data[complete.cases(data),]
 holder <- aggregate(data_complete$steps, list(data_complete$date), sum)
 names(holder) <- c("date", "total steps")
 ```
 
 Histogram of the total number of steps taken each day:  
-```{r histo}
+
+```r
 hist(holder[,2],
      breaks=10,
      main=" ",
      xlab="Total no. of steps taken each day")
 ```
 
+![](PA1_template_files/figure-html/histo-1.png) 
+
 The mean and median were calculated:  
-```{r mean and median calculation}
+
+```r
 mean_steps <- mean(holder[,2])
 mean_steps <- format(mean_steps, scientific=F)
 median_steps <- median(holder[,2])
 ```
 
 The mean and median of the total number of steps taken per day are
-**`r mean_steps`** and **`r median_steps`** respectively.  
+**10766.19** and **10765** respectively.  
 
 ## What is the average daily activity pattern?
 
 Time series plot of the 5-minute interval (x-axis) and the average number of 
 steps taken, averaged across all days (y-axis):  
 
-```{r steps_interval_mean}
+
+```r
 mean_interval <- aggregate(data$steps, list(data$interval), mean, na.rm=T)
 names(mean_interval) <- c("interval", "mean.steps")
 plot(mean_interval$interval, 
@@ -95,31 +108,36 @@ plot(mean_interval$interval,
      ylab="No. of steps")
 ```
 
+![](PA1_template_files/figure-html/steps_interval_mean-1.png) 
+
 5-minute interval, on average across all the days in the dataset, that contains 
 the maximum number of steps:
 
-```{r max mean}
+
+```r
 max <- mean_interval[which.max(mean_interval$mean.steps),]
 ```
 
-Hence the **`r max[1,1]`th** interval has the maximum mean steps of 
-**`r round(max[1,2], 2)`**.  
+Hence the **835th** interval has the maximum mean steps of 
+**206.17**.  
 
 ## Inputing missing values
 
 Taking the difference in the number of rows in `data_complete` and 
 `complete` data.frame:
 
-```{r}
+
+```r
 no.na <- nrow(data) - nrow(data_complete)
 ```
 
-The total number of rows with `NA`s is **`r no.na`**.  
+The total number of rows with `NA`s is **2304**.  
 
 We will replace the `NA` in the data set using the mean number of steps for the 
 same interval, averaged across all the days in the dataset.  
 
-```{r replace_NA}
+
+```r
 new_data <- data
 for (i in 1:nrow(new_data)) {
         if (is.na(new_data[i,1])) {
@@ -131,7 +149,8 @@ for (i in 1:nrow(new_data)) {
 
 Plotting the new dataset with `NA`s replaced:  
 
-```{r histo_new_data}
+
+```r
 new_holder <- aggregate(new_data$steps, list(new_data$date), sum)
 names(new_holder) <- c("date", "total steps")
 hist(new_holder[,2],
@@ -140,8 +159,11 @@ hist(new_holder[,2],
      xlab="Total no. of steps taken each day")
 ```
 
+![](PA1_template_files/figure-html/histo_new_data-1.png) 
+
 The mean and median for the new dataset were calculated:  
-```{r new mean and median calculation}
+
+```r
 new_mean_steps <- mean(new_holder[,2])
 new_mean_steps <- format(new_mean_steps, scientific=F)
 new_median_steps <- median(new_holder[,2])
@@ -149,18 +171,18 @@ new_median_steps <- format(new_median_steps, scientific=F)
 ```
 
 The mean and median of the total number of steps taken per day for the new 
-dataset are **`r new_mean_steps`** and **`r new_median_steps`** respectively.  
+dataset are **10766.19** and **10766.19** respectively.  
 
 Yes these values differ from the estimates from the first part of the 
 assignment as shown below:
 
 **- Original dataset:**  
-mean = `r mean_steps`  
-median = `r median_steps`  
+mean = 10766.19  
+median = 10765  
 
 **- New dataset:**  
-mean = `r new_mean_steps`  
-median = `r new_median_steps`  
+mean = 10766.19  
+median = 10766.19  
 
 The impact of inputing missing data on the estimates of the total daily number 
 of steps is that the median increased and the mean and median became the same.
@@ -176,7 +198,8 @@ by interval, was calculated for each subset (`mean_wkend` and `mean_wkday`). The
 2 subsets were combined. The weekdays factor was introduced into the combined
 data frame `mean_join`. The plot was created using `lattice` library.
 
-```{r}
+
+```r
 data$weekdays <- as.factor(ifelse(weekdays(data$date) %in% c("Saturday", "Sunday"), "weekend", "weekday"))
 data_wkend <- filter(data, weekdays == "weekend")
 data_wkday <- filter(data, weekdays == "weekday")
@@ -198,6 +221,8 @@ p <- xyplot(mean.step ~ interval | weekdays,
 
 print(p)
 ```
+
+![](PA1_template_files/figure-html/unnamed-chunk-2-1.png) 
 
 **Observation:** Yes there were differences in activity patterns between 
 weekdays and weekends. The subject was more active on weekends.
